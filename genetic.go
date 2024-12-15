@@ -5,6 +5,8 @@ import (
 	"math"
 	"sort"
 	"sync"
+
+	"github.com/matwate/sometinyai/activation"
 )
 
 const MUTATION_COUNT = 2
@@ -42,10 +44,13 @@ func (p Population) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func NewPopulation(size int, inputs int, outputs int) Population {
+func NewPopulation(size int, inputs int, outputs int, act func(float64) float64) Population {
+	if act == nil {
+		act = activation.Relu
+	}
 	p := make(Population, size)
 	for i := range p {
-		p[i].Genome = NewGenome(inputs, outputs)
+		p[i].Genome = NewGenome(inputs, outputs, act)
 	}
 	return p
 }
@@ -56,9 +61,10 @@ func NewSimulation(
 	outputs int,
 	thresh float64,
 	brek ThresholdBreak,
+	act func(float64) float64,
 ) Simulation {
 	return Simulation{
-		Population:     NewPopulation(size, inputs, outputs),
+		Population:     NewPopulation(size, inputs, outputs, act),
 		threshold:      brek,
 		thresholdValue: thresh,
 	}

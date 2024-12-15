@@ -2,7 +2,6 @@ package sometinyai
 
 import (
 	"fmt"
-	"math"
 	"math/rand/v2"
 	"os"
 
@@ -10,19 +9,20 @@ import (
 )
 
 type Genome struct {
-	graph     graph.Graph[int, int]
-	order     []int // This is the topological order of the nodes
-	input     int
-	output    int
-	hidden    int
-	adjacency map[int]map[int]graph.Edge[int]
+	graph              graph.Graph[int, int]
+	order              []int // This is the topological order of the nodes
+	input              int
+	output             int
+	hidden             int
+	adjacency          map[int]map[int]graph.Edge[int]
+	activationFunction func(float64) float64 // This will be used for ALL nodes
 }
 
 type EdgeConnectionData struct {
 	weight, bias float64
 }
 
-func NewGenome(x, y int) *Genome {
+func NewGenome(x, y int, activation func(float64) float64) *Genome {
 	g := graph.New(graph.IntHash, graph.Directed(), graph.Acyclic())
 	for i := range x {
 		g.AddVertex(i)
@@ -92,7 +92,7 @@ func (g *Genome) ForwardPropagation(input ...float64) []float64 {
 		}
 
 		// Apply activation function (e.g., tanh)
-		nodeValues[node] = math.Tanh(sum)
+		nodeValues[node] = g.activationFunction(sum)
 	}
 
 	// Collect output values
