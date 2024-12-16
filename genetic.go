@@ -9,7 +9,7 @@ import (
 	"github.com/matwate/sometinyai/activation"
 )
 
-const MUTATION_COUNT = 2
+var MUTATION_COUNT = 2
 
 type Agent struct {
 	Genome  *Genome
@@ -53,6 +53,10 @@ func NewPopulation(size int, inputs int, outputs int, act func(float64) float64)
 		p[i].Genome = NewGenome(inputs, outputs, act)
 	}
 	return p
+}
+
+func SetMutationCount(count int) {
+	MUTATION_COUNT = count
 }
 
 func NewSimulation(
