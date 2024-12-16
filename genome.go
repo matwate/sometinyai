@@ -36,11 +36,12 @@ func NewGenome(x, y int, activation func(float64) float64) *Genome {
 		}
 	}
 	return &Genome{
-		graph:  g,
-		order:  nil,
-		input:  x,
-		output: y,
-		hidden: 0,
+		graph:              g,
+		order:              nil,
+		input:              x,
+		output:             y,
+		hidden:             0,
+		activationFunction: activation,
 	}
 }
 
@@ -153,10 +154,11 @@ func (g *Genome) Copy() *Genome {
 	}
 
 	return &Genome{
-		graph:  newGraph,
-		input:  g.input,
-		output: g.output,
-		hidden: g.hidden,
+		graph:              newGraph,
+		input:              g.input,
+		output:             g.output,
+		hidden:             g.hidden,
+		activationFunction: g.activationFunction,
 	}
 }
 
