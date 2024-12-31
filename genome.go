@@ -106,6 +106,14 @@ func (g *Genome) ForwardPropagation(input ...float64) []float64 {
 	return outputValues
 }
 
+func (g *Genome) ForwardPropagationBatched(input ...[]float64) [][]float64 {
+	output := make([][]float64, len(input))
+	for i, v := range input {
+		output[i] = g.ForwardPropagation(v...)
+	}
+	return output
+}
+
 func NewEdgeConnectionData(weight, bias float64) *EdgeConnectionData {
 	if weight < 0 {
 		weight = rand.NormFloat64()
