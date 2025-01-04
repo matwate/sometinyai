@@ -154,3 +154,86 @@ Sim:
 	// Return the best agent
 	return p[0]
 }
+
+func (s *Simulation) TrainWithMutableArguments(
+	total_iter int,
+	Fitness func(*Genome, ...interface{}) float64,
+	args ...interface{},
+) Agent {
+	p := s.Population
+	if len(args) == 0 {
+		fmt.Println("No arguments provided, if this is intended, use Train method instead")
+		return s.Train(total_iter, func(g *Genome) float64 {
+			return Fitness(g)
+		})
+	}
+Sim:
+	for iter := 0; iter < total_iter; iter++ {
+		// Evaluate Fitness concurrently
+		var wg sync.WaitGroup
+		for i := range p {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				p[i].Fitness = Fitness(p[i].Genome, args...)
+			}(i)
+		}
+		wg.Wait()
+
+		// Sort Population based on Fitness
+		switch s.threshold {
+		case Highest:
+			sort.Slice(p, func(i, j int) bool {
+				return p[i].Fitness > p[j].Fitness
+			})
+		case Lowest:
+			sort.Slice(p, func(i, j int) bool {
+				return p[i].Fitness < p[j].Fitness
+			})
+		case Closest:
+			sort.Slice(p, func(i, j int) bool {
+				return math.Abs(p[i].Fitness-s.thresholdValue) < math.Abs(p[j].Fitness-s.thresholdValue)
+			})
+		}
+		// Keep top performers
+		thresh := len(p) / 3
+		newPop := make(Population, 0, len(p))
+
+		// Append top performers
+		newPop = append(newPop, p[:thresh]...)
+
+		// Generate the rest of the Population
+		for i := thresh; i < len(p); i++ {
+			parent := newPop[i%thresh]
+
+			// Copy and mutate the Genome
+			newGenome := parent.Genome.Copy()
+			newGenome.Mutate(MUTATION_COUNT)
+
+			// Create a new agent with the mutated Genome
+			newAgent := Agent{
+				Genome:  newGenome,
+				Fitness: 0,
+			}
+
+			// Append the new agent
+			newPop = append(newPop, newAgent)
+		}
+
+		// Update the Population
+		s.Population = newPop
+		p = s.Population
+		fmt.Println("Iteration: ", iter, "Fitness: ", p[0].Fitness)
+		_ = fmt.Sprintf("Iteration: %d Fitness: %f", iter, p[0].Fitness)
+		// We can specify a break condition, to signify that the training was successful
+		best := p[0].Fitness
+		if len(args) > 0 {
+			for _, b := range args {
+				if b.(func(float64) bool)(best) {
+					break Sim
+				}
+			}
+		}
+	}
+	return p[0]
+}
