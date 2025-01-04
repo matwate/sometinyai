@@ -158,8 +158,15 @@ Sim:
 func (s *Simulation) TrainWithMutableArguments(
 	total_iter int,
 	Fitness func(*Genome, ...interface{}) float64,
+	onSuccess func(float64, ...interface{}) ([]interface{}, bool),
+	successThreshold float64,
 	args ...interface{},
 ) Agent {
+	// Difference between Train and TrainWithMutable arguments is that.
+	// 1. The latter can take in additional arguments to the Fitness function
+	// 2. The latter requires a function when the training threshold is met, allowing it to modify the arguments on a "succesfull" generation also allowing it to break the training loop
+	// onSuccess function should return true if the training should stop, it takes the data you passed in as arguments, along with the best fitness value
+
 	p := s.Population
 	if len(args) == 0 {
 		fmt.Println("No arguments provided, if this is intended, use Train method instead")
@@ -223,15 +230,39 @@ Sim:
 		// Update the Population
 		s.Population = newPop
 		p = s.Population
-		fmt.Println("Iteration: ", iter, "Fitness: ", p[0].Fitness)
+		fmt.Println("Iteration: ", iter, "Fitness: ", p[0].Fitness, "Data", args)
 		_ = fmt.Sprintf("Iteration: %d Fitness: %f", iter, p[0].Fitness)
 		// We can specify a break condition, to signify that the training was successful
 		best := p[0].Fitness
-		if len(args) > 0 {
-			for _, b := range args {
-				if b.(func(float64) bool)(best) {
+		switch s.threshold {
+		case Highest:
+			if best >= successThreshold {
+				fmt.Println("Success, calling onSuccess")
+				newargs, stop := onSuccess(best, args...)
+				if stop {
 					break Sim
 				}
+				args = newargs
+			}
+		case Lowest:
+			if best <= successThreshold {
+				fmt.Println("Success, calling onSuccess")
+				newargs, stop := onSuccess(best, args...)
+				if stop {
+					break Sim
+				}
+				args = newargs
+
+			}
+		case Closest:
+			if math.Abs(best-successThreshold) <= 0.0001 {
+				fmt.Println("Success, calling onSuccess")
+				newargs, stop := onSuccess(best, args...)
+				if stop {
+					break Sim
+				}
+				args = newargs
+
 			}
 		}
 	}
