@@ -161,7 +161,7 @@ func (s *Simulation) TrainWithMutableArguments(
 	onSuccess func(float64, ...interface{}) ([]interface{}, bool),
 	successThreshold float64,
 	args ...interface{},
-) Agent {
+) (Agent, []interface{}) {
 	// Difference between Train and TrainWithMutable arguments is that.
 	// 1. The latter can take in additional arguments to the Fitness function
 	// 2. The latter requires a function when the training threshold is met, allowing it to modify the arguments on a "succesfull" generation also allowing it to break the training loop
@@ -172,7 +172,7 @@ func (s *Simulation) TrainWithMutableArguments(
 		fmt.Println("No arguments provided, if this is intended, use Train method instead")
 		return s.Train(total_iter, func(g *Genome) float64 {
 			return Fitness(g)
-		})
+		}), args
 	}
 Sim:
 	for iter := 0; iter < total_iter; iter++ {
@@ -266,5 +266,5 @@ Sim:
 			}
 		}
 	}
-	return p[0]
+	return p[0], args
 }
