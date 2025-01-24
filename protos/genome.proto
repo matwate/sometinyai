@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package sometinyai;
+
+option go_package = "github.com/matwate/sometinyai/loading";
+
+message Genome {
+  int32 inputs = 1;
+  int32 outputs = 2;
+  int32 neurons = 3;
+  repeated Connection connections = 4;
+  string activation = 5;
+}
+
+message Connection {
+  int32 in = 1;
+  int32 out = 2;
+  double weight = 3;
+  double bias = 4;
+}

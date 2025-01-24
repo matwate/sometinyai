@@ -3,7 +3,6 @@ package sometinyai
 import (
 	"fmt"
 	"math/rand/v2"
-	"os"
 
 	"github.com/dominikbraun/graph"
 )
@@ -43,6 +42,30 @@ func NewGenome(x, y int, activation func(float64) float64) *Genome {
 		hidden:             0,
 		activationFunction: activation,
 	}
+}
+
+func (g *Genome) AddNode() {
+	// Get the number of nodes
+	nodeCount, _ := g.graph.Order()
+
+	// Add a new node
+	g.graph.AddVertex(nodeCount)
+
+	g.hidden++
+}
+
+func (g *Genome) AddEdge(from, to int, data *EdgeConnectionData) {
+	g.graph.AddEdge(from, to, graph.EdgeData(data))
+	g.invalidateAdjacency()
+	adj, _ := g.graph.AdjacencyMap()
+	weight := adj[from][to].Properties.Data.(*EdgeConnectionData).weight
+	bias := adj[from][to].Properties.Data.(*EdgeConnectionData).bias
+	fmt.Printf("Added edge from %d to %d with weight %f and bias %f\n", from, to, weight, bias)
+}
+
+func (g *Genome) invalidateAdjacency() {
+	g.adjacency = nil
+	g.adjacency, _ = g.graph.AdjacencyMap()
 }
 
 func (g *Genome) ForwardPropagation(input ...float64) []float64 {
@@ -168,22 +191,4 @@ func (g *Genome) Copy() *Genome {
 		hidden:             g.hidden,
 		activationFunction: g.activationFunction,
 	}
-}
-
-func (g *Genome) Save(filename string) error {
-	file, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	node_count, _ := g.graph.Order()
-	fmt.Fprintf(file, "%d %d %d\n", node_count, g.input, g.output)
-	adj, _ := g.graph.AdjacencyMap()
-	for k, v := range adj {
-		for k2, v2 := range v {
-			data := v2.Properties.Data.(*EdgeConnectionData)
-			fmt.Fprintf(file, "%d %d %f %f\n", k, k2, data.weight, data.bias)
-		}
-	}
-	return nil
 }

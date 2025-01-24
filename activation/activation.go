@@ -23,3 +23,12 @@ func LeakyRelu(x float64) float64 {
 	}
 	return x
 }
+
+type ActivationFunction int
+
+const (
+	Tanh_T ActivationFunction = iota
+	Sigmoid_T
+	Relu_T
+	LeakyRelu_T
+)
