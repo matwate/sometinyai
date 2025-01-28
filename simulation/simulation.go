@@ -76,7 +76,7 @@ func BreakClosest(value float64) Option {
 	}
 }
 
-func UseMutableData(data []interface{}) Option {
+func UseMutableData(data ...interface{}) Option {
 	return func(o *Options) {
 		o.useMutableData = true
 		o.mutableData = data
