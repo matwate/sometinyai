@@ -159,7 +159,7 @@ Sim:
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				p[i].Fitness = s.Config.fitness(p[i].Genome, s.Config.mutableData)
+				p[i].Fitness = s.Config.fitness(p[i].Genome, s.Config.mutableData...)
 			}(i)
 
 		}
