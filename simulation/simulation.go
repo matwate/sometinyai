@@ -205,8 +205,8 @@ Sim:
 		best := p[0]
 
 		if s.Config.useMutableData {
-			if s.Config.dataCondition(best.Fitness, s.Config.mutableData) {
-				s.Config.mutableData = s.Config.dataChange(s.Config.mutableData)
+			if s.Config.dataCondition(best.Fitness, s.Config.mutableData...) {
+				s.Config.mutableData = s.Config.dataChange(s.Config.mutableData...)
 			}
 		}
 
