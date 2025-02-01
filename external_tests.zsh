@@ -16,7 +16,7 @@ error_exit() {
 
 # Run tests
 echo "🛠 Running tests..."
-if ! go test ./...; then
+if ! go test ./... -v; then
     error_exit "❌ Tests failed. Exiting."
 fi
 
@@ -43,3 +43,4 @@ echo "🚀 Running the code..."
 go run . || error_exit "❌ Failed to run code"
 
 echo "✅ All tasks completed successfully!"
+d
