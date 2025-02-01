@@ -164,9 +164,10 @@ func NewPopulation(size int, inputs int, outputs int, act func(float64) float64)
 
 func (s Simulation) Train() (Agent, interface{}) {
 	p := s.Population
+	PrintOptions(s)
 Sim:
+
 	for iter := 0; iter < s.Config.iterations; iter++ {
-		PrintOptions(s)
 		if s.Config.fitness == nil {
 			panic("No Fitness Function Provided")
 		}
