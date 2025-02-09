@@ -125,6 +125,7 @@ func NewSimulation(
 	  - No breaking conditions
 	  - No mutable data
 	*/
+
 	args := &Options{
 		population:     100,
 		mutation_count: 1,
@@ -185,11 +186,12 @@ Sim:
 		}
 
 		var wg sync.WaitGroup
+		ft := s.Config.fitness
 		for i := range p {
 			wg.Add(1)
 			go func(i int) {
 				defer wg.Done()
-				p[i].Fitness = s.Config.fitness(p[i].Genome, s.Config.mutableData)
+				p[i].Fitness = ft(p[i].Genome, s.Config.mutableData)
 			}(i)
 
 		}
