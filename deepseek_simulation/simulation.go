@@ -17,8 +17,9 @@ type (
 		Genome  *sometinyai.Genome
 		Fitness float64
 	}
-	Population []Agent
-	Simulation struct {
+	ThresholdBreak int
+	Population     []Agent
+	Simulation     struct {
 		Population Population
 		Config     *Options
 	}
@@ -27,13 +28,19 @@ type (
 		MutationCount     int
 		Iterations        int
 		Fitness           func(*sometinyai.Genome, interface{}) float64 // Now takes mutable data
-		Threshold         sometinyai.ThresholdBreak
+		Threshold         ThresholdBreak
 		ThresholdValue    float64
 		MutableData       interface{}
 		SuccessCallback   func(float64, interface{}) (interface{}, bool)
 		generationTimeout time.Duration
 	}
 	Option func(*Options)
+)
+
+const (
+	Highest ThresholdBreak = iota
+	Lowest
+	Closest
 )
 
 func PopulationSize(size int) Option {
@@ -48,7 +55,7 @@ func Iterations(iter int) Option {
 	return func(o *Options) { o.Iterations = iter }
 }
 
-func Threshold(threshold sometinyai.ThresholdBreak, value float64) Option {
+func Threshold(threshold ThresholdBreak, value float64) Option {
 	return func(o *Options) {
 		o.Threshold = threshold
 		o.ThresholdValue = value
@@ -78,7 +85,7 @@ func NewSimulation(inputs, outputs int, act func(float64) float64, opts ...Optio
 		PopulationSize: 100,
 		MutationCount:  2,
 		Iterations:     1000,
-		Threshold:      sometinyai.Highest,
+		Threshold:      Highest,
 	}
 
 	for _, opt := range opts {
@@ -137,15 +144,15 @@ func (s Simulation) Train() (Agent, interface{}) {
 
 		// Sort population based on threshold
 		switch s.Config.Threshold {
-		case sometinyai.Highest:
+		case Highest:
 			sort.Slice(s.Population, func(i, j int) bool {
 				return s.Population[i].Fitness > s.Population[j].Fitness
 			})
-		case sometinyai.Lowest:
+		case Lowest:
 			sort.Slice(s.Population, func(i, j int) bool {
 				return s.Population[i].Fitness < s.Population[j].Fitness
 			})
-		case sometinyai.Closest:
+		case Closest:
 			sort.Slice(s.Population, func(i, j int) bool {
 				return math.Abs(s.Population[i].Fitness-s.Config.ThresholdValue) <
 					math.Abs(s.Population[j].Fitness-s.Config.ThresholdValue)
@@ -167,7 +174,7 @@ func (s Simulation) Train() (Agent, interface{}) {
 		// Check success condition and update mutable data
 		if s.Config.SuccessCallback != nil {
 			switch s.Config.Threshold {
-			case sometinyai.Highest:
+			case Highest:
 				if bestFitness >= s.Config.ThresholdValue {
 					if newData, stop := s.Config.SuccessCallback(bestFitness, s.Config.MutableData); stop {
 						return s.Population[0], newData
@@ -175,7 +182,7 @@ func (s Simulation) Train() (Agent, interface{}) {
 						s.Config.MutableData = newData
 					}
 				}
-			case sometinyai.Lowest:
+			case Lowest:
 				if bestFitness <= s.Config.ThresholdValue {
 					if newData, stop := s.Config.SuccessCallback(bestFitness, s.Config.MutableData); stop {
 						return s.Population[0], newData
@@ -183,7 +190,7 @@ func (s Simulation) Train() (Agent, interface{}) {
 						s.Config.MutableData = newData
 					}
 				}
-			case sometinyai.Closest:
+			case Closest:
 				if math.Abs(bestFitness-s.Config.ThresholdValue) < 0.0001 {
 					if newData, stop := s.Config.SuccessCallback(bestFitness, s.Config.MutableData); stop {
 						return s.Population[0], newData
