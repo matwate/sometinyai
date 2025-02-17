@@ -1,10 +1,12 @@
 package simulation
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sort"
 	"sync"
+	"time"
 
 	"github.com/matwate/sometinyai"
 	"github.com/matwate/sometinyai/activation"
@@ -21,14 +23,15 @@ type (
 		Config     *Options
 	}
 	Options struct {
-		PopulationSize  int
-		MutationCount   int
-		Iterations      int
-		Fitness         func(*sometinyai.Genome, interface{}) float64 // Now takes mutable data
-		Threshold       sometinyai.ThresholdBreak
-		ThresholdValue  float64
-		MutableData     interface{}
-		SuccessCallback func(float64, interface{}) (interface{}, bool)
+		PopulationSize    int
+		MutationCount     int
+		Iterations        int
+		Fitness           func(*sometinyai.Genome, interface{}) float64 // Now takes mutable data
+		Threshold         sometinyai.ThresholdBreak
+		ThresholdValue    float64
+		MutableData       interface{}
+		SuccessCallback   func(float64, interface{}) (interface{}, bool)
+		generationTimeout time.Duration
 	}
 	Option func(*Options)
 )
@@ -66,6 +69,10 @@ func Fitness(f func(*sometinyai.Genome, interface{}) float64) Option {
 	return func(o *Options) { o.Fitness = f }
 }
 
+func WithTimeout(d time.Duration) Option {
+	return func(o *Options) { o.generationTimeout = d }
+}
+
 func NewSimulation(inputs, outputs int, act func(float64) float64, opts ...Option) Simulation {
 	options := &Options{
 		PopulationSize: 100,
@@ -96,21 +103,37 @@ func newPopulation(size, inputs, outputs int, act func(float64) float64) Populat
 }
 
 func (s Simulation) Train() (Agent, interface{}) {
+	var timeout time.Duration
+	if s.Config.generationTimeout > 0 {
+		timeout = s.Config.generationTimeout
+	} else {
+		timeout = 100 * time.Minute
+	}
+
 	for iter := 0; iter < s.Config.Iterations; iter++ {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
 		var wg sync.WaitGroup
 
 		// Evaluate fitness with current mutable data
 		for i := range s.Population {
 			wg.Add(1)
-			go func(i int) {
-				defer wg.Done()
-				s.Population[i].Fitness = s.Config.Fitness(
-					s.Population[i].Genome,
-					s.Config.MutableData,
-				)
-			}(i)
+			go func(i int, ctx context.Context) {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					defer wg.Done()
+					s.Population[i].Fitness = s.Config.Fitness(
+						s.Population[i].Genome,
+						s.Config.MutableData,
+					)
+				}
+			}(i, ctx)
 		}
 		wg.Wait()
+
+		// If thing was canceled, return the best agent
 
 		// Sort population based on threshold
 		switch s.Config.Threshold {
