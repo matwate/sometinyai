@@ -116,13 +116,17 @@ func (s Simulation) Train() (Agent, interface{}) {
 	} else {
 		timeout = 100 * time.Minute
 	}
-	_, cancel := context.WithTimeout(context.Background(), 10*time.Hour)
-	defer cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Hour)
+	defer func() { fmt.Printf("Training Caneled after %v\n", ctx.Err()); cancel() }()
 	for iter := 0; iter < s.Config.Iterations; iter++ {
 
 		genCtx, genCancel := context.WithTimeout(context.Background(), timeout)
 		var wg sync.WaitGroup
-		defer genCancel()
+		defer func() {
+			fmt.Printf("Generation %d canceled after %v \n", iter, genCtx.Err())
+
+			genCancel()
+		}()
 
 		// Evaluate fitness with current mutable data
 		for i := range s.Population {
