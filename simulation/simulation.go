@@ -116,11 +116,13 @@ func (s Simulation) Train() (Agent, interface{}) {
 	} else {
 		timeout = 100 * time.Minute
 	}
-
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Hour)
+	defer cancel()
 	for iter := 0; iter < s.Config.Iterations; iter++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
+
+		genCtx, genCancel := context.WithTimeout(context.Background(), timeout)
 		var wg sync.WaitGroup
+		defer genCancel()
 
 		// Evaluate fitness with current mutable data
 		for i := range s.Population {
@@ -136,7 +138,7 @@ func (s Simulation) Train() (Agent, interface{}) {
 						s.Config.MutableData,
 					)
 				}
-			}(i, ctx)
+			}(i, genCtx)
 		}
 		wg.Wait()
 
