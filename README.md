@@ -4,7 +4,7 @@ A lightweight neural network framework using genetic algorithms for evolution ba
 
 ## Overview
 
-SomeTinyAI provides a minimalist approach to neural networks, focusing on a graph-based genome representation that evoulves through mutations rather than traditional backpropagation
+SomeTinyAI provides a minimalist approach to neural networks, focusing on a graph-based genome representation that evolves through mutations rather than traditional backpropagation
 
 ## Installation
 
